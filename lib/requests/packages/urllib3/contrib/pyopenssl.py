@@ -46,7 +46,6 @@ from __future__ import absolute_import
 import idna
 import OpenSSL.SSL
 from cryptography import x509
-from cryptography.hazmat.backends.openssl import backend as openssl_backend
 from cryptography.hazmat.backends.openssl.x509 import _Certificate
 
 from socket import timeout, error as SocketError
@@ -156,6 +155,11 @@ def _dnsname_to_stdlib(name):
     return name
 
 
+def _get_backend():
+    """ https://github.com/pyca/pyopenssl/pull/552 """
+    from cryptography.hazmat.backends.openssl.backend import backend
+    return backend
+
 def get_subj_alt_name(peer_cert):
     """
     Given an PyOpenSSL certificate, provides all the subject alternative names.
@@ -163,6 +167,7 @@ def get_subj_alt_name(peer_cert):
     # Pass the cert to cryptography, which has much better APIs for this.
     # This is technically using private APIs, but should work across all
     # relevant versions until PyOpenSSL gets something proper for this.
+    openssl_backend = _get_backend()
     cert = _Certificate(openssl_backend, peer_cert._x509)
 
     # We want to find the SAN extension. Ask Cryptography to locate it (it's
